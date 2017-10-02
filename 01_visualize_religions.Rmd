@@ -1,0 +1,192 @@
+---
+title: "Evolution des religions en Suisse"
+author: "Duc-Quang Nguyen | swissinfo.ch"
+date: " 2017"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    theme: simplex
+---
+
+## Code
+
+Highcharter's annotations are tricks, explained [here](https://stackoverflow.com/questions/45197045/highcharter-add-multiple-text-annotations)
+
+#### Snippets
+
+## Data
+
+* [excel source](https://www.bfs.admin.ch/bfs/de/home/statistiken/bevoelkerung/sprachen-religionen/religionen.assetdetail.1822038.html)
+
+* Excel manually cleaned 
+* 
+
+## Related
+* [OFS grpahic](https://www.bfs.admin.ch/bfs/fr/home/statistiques/population/langues-religions/religions.html)
+
+
+```{r setup, include=FALSE}
+data.file <- "input/je-f-01.08.02.01_cleaned.csv"
+
+
+library(tidyverse)
+library(scales)
+library(magrittr)
+library(countrycode)
+library(swiMap)
+library(swiTheme)
+
+### Interactive 
+library(RColorBrewer)
+library(htmltools)
+library(highcharter)
+library(swiRcharts)
+```
+
+
+```{r data load & wrangle}
+data.read <- read_csv(data.file, 
+                      col_types = cols(`Année` = col_integer(), 
+                                       `Autres communautés chrétiennes` = col_double(), 
+                                       `Communautés islamiques` = col_double())
+) 
+
+data.read %<>% filter(`Nationalité` == "Total") %>% select(-Nationalité)
+
+# tidyfy
+data <- data.read %>% 
+  gather(religion, perc, -Année, -`Population résidante`) %>%
+  rename(annee = `Année`, pop = `Population résidante`)
+
+data %<>% 
+  mutate(perc = ifelse(is.na(as.numeric(perc)), 0, as.numeric(perc)), value = (perc / 100) * pop)
+
+# data %<>% group_by(annee, religion) %>% 
+#   mutate(perc_religion = (sum(value) / pop_tot) * 100) %>% 
+#   ungroup() %>%
+#   arrange(annee, religion, nat)
+
+# check
+chk <- data %>% group_by(annee) %>% 
+  summarise(totperc = round(sum(perc, na.rm = T), 0)) %>% 
+  ungroup() %>% select(totperc) %>% unlist()
+stopifnot(chk == 100)
+
+## Remove sans indication and recompute % and value
+newpop <- data %>% filter(religion == "Sans indication") %>% 
+  mutate(pop = pop - value) %>% select(annee, pop)
+
+data %<>% filter(religion != "Sans indication") %>%
+  select(-pop) %>% left_join(newpop) %>%
+  mutate(perc = (value/pop) * 100)
+
+```
+
+
+```{r pre viz wrangle}
+# assign colour to religion
+reg2col <- structure(
+  c("Evangélique réformé (protestant)", "Catholique romain",
+  "Autres communautés chrétiennes", "Communautés juives",
+  "Communautés islamiques", "Autres églises et communautés",
+  "Sans confession"),
+  names = c(swi_col[1], swi_col[2], swi_col[3], 
+            swi_col[4], swi_col[8], swi_col[5],
+            "#120807"
+  ))
+showinLegend <- c("Autres communautés chrétiennes", "Communautés juives",
+  "Communautés islamiques", "Autres églises et communautés")
+          
+
+data %<>% mutate(religion = factor(religion, levels = rev(reg2col)))
+# assign colors to relgion-nationality using different colorBrewever palette
+data$color <- names(reg2col)[match(data$religion, reg2col )]
+data %<>% arrange(desc(religion))
+
+```
+
+```{r viz area graphic}
+
+lang <- 'FR'
+
+hc <- hchart(data, "areaspline", 
+    hcaes(x = annee, y = perc, group = religion),
+    fillOpacity = 0.8,  lineWidth = 0,
+    stacking = T, marker = list(
+      enabled = F,
+      symbol = "circle",
+      radius = 0,
+      states = list(hover = list(enabled = T, radius = 2, radiusPlus = 2, lineWidthPlus = 1))
+    )
+)
+#hc
+## hack to hide in legend!!!
+for(i in 1:length(hc$x$hc_opts$series)) {
+  if(!hc$x$hc_opts$series[[i]]$name %in% showinLegend) {
+    hc$x$hc_opts$series[[i]]$showInLegend <- F      
+  }
+}
+hc %<>% hc_add_theme(hc_theme_swi) %>%
+  hc_colors(colors = rev(names(reg2col))) %>%
+   hc_yAxis(title = list(text = ""), tickAmount = 5,
+          minorGridLineWidth = 0,
+          opposite = ifelse(lang == "AR", T, F),
+          labels = list(useHTML =T, tickLength = 7, 
+          format = "{value}%"), max = 100
+          # style = list(fontSize = "12px")
+   ) %>% 
+  hc_xAxis(title = list(text = ""), lineWidth = 0.5, 
+            max = max(data$annee), min = min(data$annee), 
+           lineColor = "#2F343B", tickWidth = 1.5, tickLength = 7, 
+           tickColor = "#2F343B", reversed = ifelse(lang == "AR", T, F)
+  ) %>%
+   hc_legend(useHTML = T, floating = F, x = ifelse(lang == 'AR', -30, 30),
+           # title = list(text = txt["legend.key", lang]),
+            verticalAlign = "top", align = ifelse(lang == 'AR', "right", "left"), 
+            rtl = ifelse(lang == "AR", T, F),
+            itemStyle = list("fontSize"= "0.8em"))  %>% 
+    hc_size(height = 570) %>%
+    hc_chart(marginTop = 40) 
+
+## annotations https://stackoverflow.com/questions/45197045/highcharter-add-multiple-text-annotations
+## highcharts api for annotations: https://www.highcharts.com/plugin-registry/single/17/Annotations
+
+df <- data_frame(
+  xValue = c(1911, 1911, 2013),
+  yValue = c(2, 75, 99),
+  anchorX = c("left", "left", "right"),
+  anchorY = c("bottom", "middle", "top"),
+  title = c("Evangélique réformé (protestant)", "Catholique romain", "Sans confession"),
+  color = c("#0e1d25", "#3e525b", "#efe9e0"),
+  fontSize = c("2em", "2em", "2em")
+)
+
+
+df <- df %>% 
+  mutate(title = pmap(list(title, color, fontSize), 
+                      function(title, color, fontSize) list(text = title, 
+         style = list(color = color, fontSize = fontSize))))
+
+
+hc %>% 
+  hc_add_annotations(df)
+
+
+# hc %>% hc_annotations(list(xValue=1911, yValue=5, anchorX = "left", 
+#                            title=list(text="Evangélique réformé (protestant)", style = list(color = "#193442", fontSize = "2em")))) %>%
+#   
+#   
+#   hc_annotations(list(xValue=1911, yValue=65, anchorX = "left", 
+#                            title=list(text="Catholique romain", style = list(color = "#4c6570", fontSize = "2em"))))
+# 
+# 
+# hc %>% hc_annotations(list(xValue=list(1911, 1911), yValue=list(5, 55), anchorX = "left", 
+#                            title=list(text="Evangélique réformé (protestant)", style = list(color = "#193442", fontSize = "2em"))))
+# 
+# 
+# 
+# hc %>%  hc_annotations(list(xValue=list(1950, 1960), yValue=list(50, 70), title=list(text=list("Annot", "asdf"))))
+# hc %>%  hc_annotations(data.frame(xValue=1950, yValue=50, title.text="Annot"))
+#  
+```

@@ -1,0 +1,136 @@
+---
+title: "Evolution des religions en Suisse"
+author: "Duc-Quang Nguyen | swissinfo.ch"
+date: " 2017"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    theme: simplex
+---
+
+
+
+#### Snippets
+
+## Data
+
+* Excel manually cleaned 
+* 
+
+## Related
+* [OFS grpahic](https://www.bfs.admin.ch/bfs/fr/home/statistiques/population/langues-religions/religions.html)
+
+
+```{r setup, include=FALSE}
+data.file <- "input/je-f-01.08.02.01_cleaned.csv"
+
+
+library(tidyverse)
+library(scales)
+library(magrittr)
+library(countrycode)
+library(swiMap)
+library(swiTheme)
+
+### Interactive 
+library(RColorBrewer)
+library(htmltools)
+library(highcharter)
+library(swiRcharts)
+```
+
+
+```{r data load & wrangle}
+data.read <- read_csv(data.file, 
+                      col_types = cols(`Année` = col_integer(), 
+                                       `Autres communautés chrétiennes` = col_double(), 
+                                       `Communautés islamiques` = col_double())
+) 
+
+# ensure Total is correct to get rid of it
+chk1 <- data.read %>% filter(`Nationalité` != "Total") %>% 
+  group_by(Année) %>%
+  summarise(`Population résidante` = sum(`Population résidante`)) %>%
+  ungroup() 
+
+chk2 <- data.read %>% filter(`Nationalité` == "Total") %>% 
+  select(Année, `Population résidante`)
+stopifnot(identical(chk1, chk2))
+
+pop_tot_chk <- data.read %>% filter(`Nationalité` == "Total") %>% 
+  select(Année, `Population résidante`) %>% 
+  rename(annee = `Année`, pop_tot = `Population résidante`)
+
+data.read %<>% filter(`Nationalité` != "Total")
+
+# tidyfy
+data <- data.read %>% 
+  gather(religion, perc, -Année, -Nationalité, -`Population résidante`) %>%
+  rename(annee = `Année`, nat = `Nationalité`, pop = `Population résidante`)
+
+data %<>% 
+  mutate(perc = ifelse(is.na(as.numeric(perc)), 0, as.numeric(perc)), value = (perc / 100) * pop)
+
+pop_tot <- data %>% filter(religion == "Evangélique réformé (protestant)") %>% 
+  group_by(annee) %>% summarise(pop_tot = sum(pop))
+stopifnot(all.equal(pop_tot_chk, pop_tot))
+
+data <- left_join(data, pop_tot) %>%
+  mutate(perc_tot = (value / pop_tot) * 100)
+
+data %<>% group_by(annee, religion) %>% 
+  mutate(perc_religion = (sum(value) / pop_tot) * 100) %>% 
+  ungroup() %>%
+  arrange(annee, religion, nat)
+
+# check
+chk <- data %>% group_by(annee) %>% 
+  summarise(totperc = round(sum(perc_tot, na.rm = T))) %>% 
+  ungroup() %>% select(totperc) %>% unlist()
+stopifnot(chk == 100)
+
+chk <- data %>% filter(nat == "Suisses") %>% group_by(annee) %>% 
+  summarise(totperc = round(sum(perc_religion, na.rm = T))) %>% ungroup() %>%
+  select(totperc) %>% unlist()
+stopifnot(chk == 100)
+
+```
+
+
+```{r pre viz wrangle}
+# assign colour to religion
+reg2pal <- structure(
+  c("Evangélique réformé (protestant)", "Catholique romain",
+  "Autres communautés chrétiennes", "Communautés juives",
+  "Communautés islamiques", "Autres églises et communautés",
+  "Sans confession", "Sans indication"),
+  names = c("Blues", "Greens", "BuGn", "Oranges", 
+          "Reds", "PuRd", "Greys", "Purples")
+)
+
+data %<>% mutate(religion = factor(religion, levels = reg2pal), nat = factor(nat, levels = c("Suisses", "Etrangers")))  
+groups <- expand.grid(levels(data$nat), levels(data$religion)) %>% as.tibble() %>% 
+  select(Var2, Var1) %>%
+  unite(Var2, Var1, col = "group", sep = " - ") %>% 
+  unlist(use.names = F)
+data %<>% mutate(group = factor(paste0(religion, " - ", nat), levels = rev(groups))) %>%
+  arrange(annee, group)
+
+# assign colors
+# assign colors to relgion-nationality using different colorBrewever palette
+data$color <- map2(as.character(data$religion), data$nat, function(x, y) 
+   brewer_pal(palette = names(reg2pal)[which(reg2pal== x)])(3)[ifelse(y == "Suisses", 3, 2)]) %>% 
+   unlist()
+```
+
+```{r viz area graphic}
+hchart(data, "areaspline", 
+    hcaes(x = annee, y = perc_tot, group = group), 
+    stacking = T, marker = list(enabled = F,
+    states = list(hover = list(enabled = F))), lineWidth = 0) %>%
+  hc_colors(colors = data$color) %>%
+  hc_plotOptions("areaspline" = list("fillOpacity" = 1))
+ 
+ 
+```
