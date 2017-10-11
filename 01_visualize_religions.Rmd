@@ -9,6 +9,8 @@ output:
     theme: simplex
 ---
 
+CID: 43530062
+
 ## Code
 
 Highcharter's annotations are tricks, explained [here](https://stackoverflow.com/questions/45197045/highcharter-add-multiple-text-annotations)
@@ -28,7 +30,7 @@ Highcharter's annotations are tricks, explained [here](https://stackoverflow.com
 
 ```{r setup, include=FALSE}
 data.file <- "input/je-f-01.08.02.01_cleaned.csv"
-
+translation.file <- "input/Re-long-form graphic - Sheet1.csv"
 
 library(tidyverse)
 library(scales)
@@ -43,7 +45,6 @@ library(htmltools)
 library(highcharter)
 library(swiRcharts)
 ```
-
 
 ```{r data load & wrangle}
 data.read <- read_csv(data.file, 
@@ -81,6 +82,7 @@ data %<>% filter(religion != "Sans indication") %>%
   select(-pop) %>% left_join(newpop) %>%
   mutate(perc = (value/pop) * 100)
 
+txt <- loadTranslation(translation.file)
 ```
 
 
@@ -92,8 +94,8 @@ reg2col <- structure(
   "Communautés islamiques", "Autres églises et communautés",
   "Sans confession"),
   names = c(swi_col[1], swi_col[2], swi_col[3], 
-            swi_col[4], swi_col[8], swi_col[5],
-            "#120807"
+            swi_col[6], swi_col[8], swi_col[5],
+            "#121008"
   ))
 showinLegend <- c("Autres communautés chrétiennes", "Communautés juives",
   "Communautés islamiques", "Autres églises et communautés")
@@ -106,87 +108,136 @@ data %<>% arrange(desc(religion))
 
 ```
 
+```{r highchart theme}
+hc_thm <- hc_theme_swi
+hc_thm$yAxis$labels$style$fontSize <- "0.7em"
+
+```
+
+
 ```{r viz area graphic}
 
 lang <- 'FR'
 
-hc <- hchart(data, "areaspline", 
-    hcaes(x = annee, y = perc, group = religion),
-    fillOpacity = 0.8,  lineWidth = 0,
-    stacking = T, marker = list(
-      enabled = F,
-      symbol = "circle",
-      radius = 0,
-      states = list(hover = list(enabled = T, radius = 2, radiusPlus = 2, lineWidthPlus = 1))
-    )
-)
-#hc
-## hack to hide in legend!!!
-for(i in 1:length(hc$x$hc_opts$series)) {
-  if(!hc$x$hc_opts$series[[i]]$name %in% showinLegend) {
-    hc$x$hc_opts$series[[i]]$showInLegend <- F      
+for (lang in colnames(txt)) {
+  
+  labels <- structure(
+    rev(levels(data$religion)), names = txt[c('pro', 'cat', 'acc', 'jui', 'isl', 'aut', 'ath'), lang]
+  )
+  
+  dd <- data %>% 
+    mutate(label = factor(names(labels)[match(religion, labels)], levels = rev(names(labels))))
+  
+  dd$tp <- paste0(
+    '<table class="table">',
+    '<tr><td><b>', dd$annee, '</td><td></td></tr>',
+    '<tr><td><em>', dd$label, '</em></td><td><b>', round(dd$perc, 1), '</b>%</td></tr>',
+    '<tr><td></td><td>', round(dd$pop), 
+    '</td></tr>','</table>')
+
+  hc <- hchart(dd, "areaspline", 
+               hcaes(x = annee, y = perc, group = label, tp = tp),
+               fillOpacity = 1,  lineWidth = 0,
+               stacking = T, marker = list(
+                 enabled = F,
+                 symbol = "circle",
+                 radius = 0,
+                 states = list(hover = list(enabled = T, radius = 1, radiusPlus = 1, lineWidthPlus = 1))
+               )
+               # disable click legend items https://stackoverflow.com/questions/13275648/disable-click-on-legend-in-highcharts-column-graph
+  ) %>% hc_plotOptions("areaspline" = list(events = list(legendItemClick = JS('function () {return false;}'))))
+  
+  #hc
+  ## hack to hide in legend!!!
+  for(i in 1:length(hc$x$hc_opts$series)) {
+    if(!hc$x$hc_opts$series[[i]]$name %in% showinLegend) {
+      hc$x$hc_opts$series[[i]]$showInLegend <- F      
+    }
   }
+  hc %<>% hc_add_theme(hc_thm) %>%
+    hc_colors(colors = rev(names(reg2col))) %>%
+    hc_yAxis(title = list(text = ""),
+             lineWidth = 1,
+             lineColor = "#8e97a4",
+             tickColor = "#2F343B",
+             tickAmount = 5,
+             tickLength = 5,
+             tickWidth = 0.5,
+             minorGridLineWidth = 0,
+             gridLineWidth = 0,
+             reversed = F,
+             opposite = ifelse(lang == "AR", T, F),
+             tickPosition = 'outside',
+             max = 100,
+             labels = list(
+               y = 7,
+               x = -7,
+               useHTML = T, 
+               format = "{value}%"), 
+             style = list("fontSize" = "1.8em")
+    ) %>% 
+    hc_xAxis(title = list(text = ""), lineWidth = 0.1, 
+             opposite = T,
+             crosshair = list(zIndex = 99, color = "#efe9e0",  dashStyle =  'shortdot'),
+             max = max(dd$annee), min = min(dd$annee), 
+             lineColor = "#2F343B", tickWidth = 1, tickLength = 5, 
+             tickColor = "#2F343B", reversed = ifelse(lang == "AR", T, F)
+    ) %>%
+    hc_legend(useHTML = T, floating = F, x = ifelse(lang == 'AR', -30, 30),
+              # title = list(text = txt["legend.key", lang]),
+              verticalAlign = "top", align = ifelse(lang == 'AR', "right", "left"), 
+              rtl = ifelse(lang == "AR", T, F),
+              reversed = T,
+              symbolHeight = 10,
+              symbolWidth = 10,
+              margin = 15,
+              itemStyle = list("fontSize"= "0.75em"))  %>% 
+    hc_size(height = 470) %>%
+    hc_chart(marginTop = 80, marginBottom = 10, marginLeft = 29) %>%
+    hc_tooltip(
+      crosshairs = TRUE, 
+      sort = T,
+      shared = T,
+      table = T,
+      valueDecimals = 1,
+      valueSuffix = "%",
+      # hideDelay = 10, formatter = JS("function() { return this.point.tp; }"), 
+      useHTML = T, borderWidth = 1, 
+      backgroundColor = 'rgba(255,255,255,1)', style = list(padding = 3, fontSize = "0.8em")
+    )
+  
+  ## annotations https://stackoverflow.com/questions/45197045/highcharter-add-multiple-text-annotations
+  ## highcharts api for annotations: https://www.highcharts.com/plugin-registry/single/17/Annotations
+  
+  df <- data_frame(
+    xValue = c(1915, 1915, 2013),
+    yValue = c(24, 77, 98),
+    anchorX = c("left", "left", "right"),
+    anchorY = c("middle", "middle", "top"),
+    title = c("Evangélique réformé (protestant)", "Catholique romain", "Sans confession"),
+    color = c("#edf4f8", "#f0f3f5", "#efe9e0"),
+    fontSize = c("1.4em", "1.4em", "1.2em")
+  )
+  
+  df <- df %>% 
+    mutate(title = pmap(list(title, color, fontSize), 
+                        function(title, color, fontSize) list(text = title, 
+                                                              style = list(color = color, fontSize = fontSize))))
+  hc %<>% 
+    hc_add_annotations(df)
+  
+  source <- paste0(txt['source', lang], ": ", txt['source.name', lang])
+  save_html(
+    tags$html(
+      tags$head(includeHTML(style_swi_highcharter())),
+      tags$h2(HTML(txt['main.title', lang])),
+      div(class = "descr", HTML(paste0('<img src="https://interactive.swissinfo.ch/assets/Interactive_icon.svg.png" width="12" align="top">&nbsp; ', txt['descr', lang]))),
+      div(class = "graphic", hc),
+      div(id = "cite", HTML(source)),
+      HTML(iframeresizer)  
+    ), #background = chart.area.bg, 
+    file =  paste0("evolutionReligion_", lang, ".html"), libdir = "js")  
 }
-hc %<>% hc_add_theme(hc_theme_swi) %>%
-  hc_colors(colors = rev(names(reg2col))) %>%
-   hc_yAxis(title = list(text = ""), tickAmount = 5,
-          minorGridLineWidth = 0,
-          opposite = ifelse(lang == "AR", T, F),
-          labels = list(useHTML =T, tickLength = 7, 
-          format = "{value}%"), max = 100
-          # style = list(fontSize = "12px")
-   ) %>% 
-  hc_xAxis(title = list(text = ""), lineWidth = 0.5, 
-            max = max(data$annee), min = min(data$annee), 
-           lineColor = "#2F343B", tickWidth = 1.5, tickLength = 7, 
-           tickColor = "#2F343B", reversed = ifelse(lang == "AR", T, F)
-  ) %>%
-   hc_legend(useHTML = T, floating = F, x = ifelse(lang == 'AR', -30, 30),
-           # title = list(text = txt["legend.key", lang]),
-            verticalAlign = "top", align = ifelse(lang == 'AR', "right", "left"), 
-            rtl = ifelse(lang == "AR", T, F),
-            itemStyle = list("fontSize"= "0.8em"))  %>% 
-    hc_size(height = 570) %>%
-    hc_chart(marginTop = 40) 
-
-## annotations https://stackoverflow.com/questions/45197045/highcharter-add-multiple-text-annotations
-## highcharts api for annotations: https://www.highcharts.com/plugin-registry/single/17/Annotations
-
-df <- data_frame(
-  xValue = c(1911, 1911, 2013),
-  yValue = c(2, 75, 99),
-  anchorX = c("left", "left", "right"),
-  anchorY = c("bottom", "middle", "top"),
-  title = c("Evangélique réformé (protestant)", "Catholique romain", "Sans confession"),
-  color = c("#0e1d25", "#3e525b", "#efe9e0"),
-  fontSize = c("2em", "2em", "2em")
-)
 
 
-df <- df %>% 
-  mutate(title = pmap(list(title, color, fontSize), 
-                      function(title, color, fontSize) list(text = title, 
-         style = list(color = color, fontSize = fontSize))))
-
-
-hc %>% 
-  hc_add_annotations(df)
-
-
-# hc %>% hc_annotations(list(xValue=1911, yValue=5, anchorX = "left", 
-#                            title=list(text="Evangélique réformé (protestant)", style = list(color = "#193442", fontSize = "2em")))) %>%
-#   
-#   
-#   hc_annotations(list(xValue=1911, yValue=65, anchorX = "left", 
-#                            title=list(text="Catholique romain", style = list(color = "#4c6570", fontSize = "2em"))))
-# 
-# 
-# hc %>% hc_annotations(list(xValue=list(1911, 1911), yValue=list(5, 55), anchorX = "left", 
-#                            title=list(text="Evangélique réformé (protestant)", style = list(color = "#193442", fontSize = "2em"))))
-# 
-# 
-# 
-# hc %>%  hc_annotations(list(xValue=list(1950, 1960), yValue=list(50, 70), title=list(text=list("Annot", "asdf"))))
-# hc %>%  hc_annotations(data.frame(xValue=1950, yValue=50, title.text="Annot"))
-#  
 ```
