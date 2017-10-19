@@ -1,13 +1,13 @@
 code,EN,FR,DE,IT,PT,AR,RU,ES,JA,ZH
-main.title,,"En un siècle, la part de protestants dans la population a diminué de moitié",,,,,,,,
-descr,,Population résidante permanente en Suisse âgée de 15 ans ou plus selon l'appartenance religieuse,,,,,,,,
-pro,,Evangélique réformé (protestant),,,,,,,,
-cat,,Catholique romain,,,,,,,,
-acc,,Autres communautés chrétiennes,,,,,,,,
-jui,,Communautés juives,,,,,,,,
-isl,,Communautés islamiques,,,,,,,,
-aut,,Autres églises et communautés,,,,,,,,
-ath,,Sans confession,,,,,,,,
+main.title,,"En un siècle, la part de protestants dans la population a diminué de moitié",In einem Jahrhundert hat sich der Anteil der Protestanten an der Bevölkerung halbiert.,"In un secolo, la quota di protestanti nella popolazione si è dimezzata",,خلال قرن واحد، انخفت نسبة البروتستانتيين من السكان بمقدار النصف.,,,,全国人口中新教徒的数量在一个世纪里减少了一半
+descr,,Population résidante permanente en Suisse âgée de 15 ans ou plus selon l'appartenance religieuse,Bevölkerung mit ständigem Wohnsitz in der Schweiz ab 15 Jahren nach Religionszugehörigkeit,Popolazione residente permanente in Svizzera (persone di almeno 15 anni di età) a seconda dell'appartenenza religiosa,,السكان المقيمون في سويسرا بشكل دائم والذين تبلغ أعمارهم خمسة عشر سنة أو يزيد بحسب الإنتماء الديني,,,,年满15岁的瑞士长住居民人口按宗教信仰划分
+pro,,Evangélique réformé (protestant),Evangelisch-reformiert (protestantisch),Evangelica riformata (protestante),,البروتستانتية,,,,归正宗福音教会(新教)
+cat,,Catholique romain,Römisch-katholisch,Cattolica romana,,الكاثوليكية,,,,罗马天主教
+acc,,Autres communautés chrétiennes,Andere christliche Gemeinden,Altre comunità cristiane,,المجموعات المسيحية الأخرى,,,,其他基督教社团
+jui,,Communautés juives,Jüdische Gemeinden,Comunità ebraiche,,المجموعة اليهودية,,,,犹太社团
+isl,,Communautés islamiques,Islamische Gemeinden,Comunità islamiche,,المجموعة الإسلامية,,,,伊斯兰教社团
+aut,,Autres églises et communautés,Andere Kirchen und Gemeinden,Altre chiese e comunità,,الكنائس والمجموعات الأخرى,,,,其他教会与社团
+ath,,Sans confession,Konfessionslos,Senza confessione,,من دون معتقد,,,,无宗教信仰
 source,Source,source,Quelle,Fonte,fonte,المصدر,Источник,Fuente,出典,来源
-source.name,,Office fédéral de la statistique,,,,,,,,
+source.name,,Office fédéral de la statistique,Bundesamt für Statistik,Ufficio federale di statistica,,,,,,联邦统计局
 code,Code,code,Code,Codice,código,الرمز,Код,código,コード,代码

@@ -1,0 +1,191 @@
+---
+title: ""
+author: "Duc-Quang Nguyen | swissinfo.ch"
+date: " 2016"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    theme: simplex
+---
+
+* Wittenberg, en Saxe
+* Zurich et de Genève 
+
+[carte OFS](https://www.atlas.bfs.admin.ch/maps/13/fr/12308_108_107_70/20322.html)
+
+
+
+```{r setup, include=FALSE}
+mapStatic <- F
+downloadWrongMap <- F
+
+data.file <- "input/20325_Appartenances_religieuses_en_2015_(fr)_shaped.csv"
+cities.file <- "input/cities.csv"
+
+
+options(tibble.width = Inf)
+library(tidyverse)
+library(magrittr)
+library(knitr)
+library(countrycode)
+library(swiMap)
+library(swiTheme)
+
+### Mapping 
+require(rgdal)
+require(rgeos)
+require(maptools)
+require(viridis)
+
+### Interactive 
+library(htmltools)
+library(swiRcharts)
+library(rCharts)
+library(highcharter)
+
+```
+
+
+```{r load & wrangle}
+data.read <- read_csv(data.file, locale = locale( grouping_mark = "'"), col_types = cols(
+  ID = col_integer(),
+  Regionsname = col_character(),
+  `Population résidante permanente à partir de 15 ans*` = col_number(),
+  `Catholique romain` = col_number(),
+  `Evangélique réformé` = col_number(),
+  `Autre appartenance religieuse` = col_number(),
+  `Sans confession` = col_number()
+  )
+) %>%
+  rename(pop = `Population résidante permanente à partir de 15 ans*`) %>%
+  select(-`Sans confession`, -`Autre appartenance religieuse`)
+
+r_levels <- c("Catholique romain", "Evangélique réformé")
+data <- data.read %>% 
+  gather(key = "confession", value = "value", -ID, -Regionsname, -pop) %>%
+  mutate(share = (value / pop)* 100, 
+         confession = factor(confession, levels = r_levels)) %>%
+  rename(id = ID)
+
+```
+
+```{r interactive map highcharter}
+if(downloadWrongMap) {
+  # To download geo data locally
+  ch_map <- download_map_data("countries/ch/ch-all")
+  ch_map <- get_data_from_map(ch_map)
+  # HACK FOR THE WRONG MAP!!
+  ch_map %<>% mutate(`hc-a2` = case_when(
+    `hc-a2` == 'NW' ~ 'OW',
+    `hc-a2` == 'NI' ~ 'NW',
+    TRUE ~ `hc-a2`
+  ))
+  save(ch_map, file = "input/ch_map4highcharter.Rdata")  
+}
+
+load("input/ch_map4highcharter.Rdata")
+
+
+# wrangle data to get 2 letters canton
+cantons2int <- canton_CH %>% select(iso2, order)
+
+data <- left_join(data, cantons2int, by = c("id" = "order")) %>%
+  select(iso2, everything(), -id) %>%
+  mutate(share = round(share, 1))
+
+hcmap("countries/ch/ch-all", download_map_data = FALSE, 
+      data = data %>% filter(confession == "Catholique romain"), value = "share",
+      joinBy = c("hc-a2", "iso2"), name = "Fake data",
+      #dataLabels = list(enabled = T, format = '{point.name}'),
+      #borderColor = "#FAFAFA",
+      borderWidth = 0.1,
+      tooltip = list(valueDecimals = 2, valuePrefix = "$", valueSuffix = " USD"))
+
+
+# library(geojsonio)
+# library(tidyverse)
+# mapdata <- geojson_read("input/ch-cantons.json")
+# 
+# dd <- data %>% dplyr::filter(confession == "Catholique romain") %>% select(-Regionsname, -confession)
+# 
+# 
+# hcmap
+# 
+# 
+# highchart(type = "map") %>%
+#   hc_add_series(mapData = mapdata, showInLegend = FALSE) %>%
+#   hc_add_series(data =  dd, type = "map", joinBy = c("id", "id"), value = "share")
+
+```
+
+
+```{r map static}
+if(mapStatic) {
+  ## cities
+  cities <- read_csv(cities.file) %>% rename(pop = size) %>% head(4)
+  cities2 <- expand.grid(cities$names,r_levels) %>% 
+    as.tibble() %>%
+    rename(names = Var1, confession = Var2)
+  cities <- left_join(cities2, cities)
+  
+  
+  path.ch <- getPathShp('CH', 2015)
+  # lakes.shp <- readOGR(path.ch, "lakes")
+  # lakes.df <- formatShp(spTransform(rmapshaper::ms_simplify(lakes.shp), CRS("+init=epsg:4326")))
+  
+  co <- spTransform(readOGR(path.ch, layer = 'country'), CRS("+init=epsg:4326"))
+  co.df <- formatShp(co)
+  
+  ca <- spTransform(rmapshaper::ms_simplify(readOGR(getPathShp('CH'), layer = 'cantons')), CRS("+init=epsg:4326"))
+  ca.df <- formatShp(ca)
+  ca.df %<>% mutate(id =  as.numeric(as.character(KANTONSNUM)))
+  
+  # dd <- left_join(data, ca.df %>% select(long, lat, group,KANTONSNUM))
+  # 
+  # ggplot(dd) +  geom_polygon(aes(x = long, y = lat, group = group, fill = share)) + facet_wrap(~ confession)
+  
+  gp <- ggplot() +
+    geom_map(aes(x = long, y = lat, group = group, map_id = id), data = ca.df,
+             map = ca.df, size = 0.15, fill=NA) + 
+    geom_map(data=data, map=ca.df,
+             aes(fill=share,
+                 map_id=id)) + 
+    facet_wrap(~confession, ncol = 1) +
+    coord_quickmap() +
+    geom_point(
+      data = cities,
+      aes(x = lon, y = lat, group = 1, size = pop),         
+      alpha = 0.7, shape = 1, color = "#0e1d25"
+    ) + 
+    guides(size = "none") + 
+    scale_size(range = c(6,14)) +
+    geom_text(
+      data = cities,
+      aes(x = lon, y = lat, group = 1, label = names),#label = label),
+      alpha = 0.8,
+      # family = txt['base.font', lang],
+      color = "#0e1d25",
+      nudge_y = -0.075,
+      nudge_x = 0.05,
+      size = 6
+    ) +
+    scale_fill_gradient(high = "#193442", low = "#f0f3f5") +
+    # scale_fill_viridis(direction = 1, option = "B") +
+    theme_minimal() + 
+    theme(
+      axis.title = element_blank(),
+      axis.ticks = element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid = element_blank(),
+      axis.text = element_blank(),
+      legend.position = "top"
+    ) 
+  
+  png('religion_canton_map.png', width = 1200, height = 1400, pointsize = 20)
+  print(gp)
+  dev.off()  
+}
+
+
+```

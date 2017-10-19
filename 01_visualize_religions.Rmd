@@ -97,9 +97,9 @@ reg2col <- structure(
             swi_col[6], swi_col[8], swi_col[5],
             "#121008"
   ))
-showinLegend <- c("Autres communautés chrétiennes", "Communautés juives",
-  "Communautés islamiques", "Autres églises et communautés")
-          
+# showinLegend <- c("Autres communautés chrétiennes", "Communautés juives",
+#   "Communautés islamiques", "Autres églises et communautés")
+showinLegend <- c("acc", "jui", "isl", "aut")
 
 data %<>% mutate(religion = factor(religion, levels = rev(reg2col)))
 # assign colors to relgion-nationality using different colorBrewever palette
@@ -124,9 +124,10 @@ for (lang in colnames(txt)) {
   labels <- structure(
     rev(levels(data$religion)), names = txt[c('pro', 'cat', 'acc', 'jui', 'isl', 'aut', 'ath'), lang]
   )
-  
+  showinLegend_lang <- txt[showinLegend, lang]
   dd <- data %>% 
     mutate(label = factor(names(labels)[match(religion, labels)], levels = rev(names(labels))))
+  
   
   dd$tp <- paste0(
     '<table class="table">',
@@ -150,7 +151,7 @@ for (lang in colnames(txt)) {
   #hc
   ## hack to hide in legend!!!
   for(i in 1:length(hc$x$hc_opts$series)) {
-    if(!hc$x$hc_opts$series[[i]]$name %in% showinLegend) {
+    if(!hc$x$hc_opts$series[[i]]$name %in% showinLegend_lang) {
       hc$x$hc_opts$series[[i]]$showInLegend <- F      
     }
   }
@@ -214,8 +215,8 @@ for (lang in colnames(txt)) {
     yValue = c(24, 77, 98),
     anchorX = c("left", "left", "right"),
     anchorY = c("middle", "middle", "top"),
-    title = c("Evangélique réformé (protestant)", "Catholique romain", "Sans confession"),
-    color = c("#edf4f8", "#f0f3f5", "#efe9e0"),
+    title = c(txt["pro", lang], txt["cat", lang], txt["ath", lang]),
+    color = c("#c8ddea", "#d1dae0", "#eee7dd"),
     fontSize = c("1.4em", "1.4em", "1.2em")
   )
   
@@ -235,7 +236,7 @@ for (lang in colnames(txt)) {
       div(class = "graphic", hc),
       div(id = "cite", HTML(source)),
       HTML(iframeresizer)  
-    ), #background = chart.area.bg, 
+    ),
     file =  paste0("evolutionReligion_", lang, ".html"), libdir = "js")  
 }
 

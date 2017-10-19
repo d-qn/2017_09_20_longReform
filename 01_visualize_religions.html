@@ -196,9 +196,9 @@ data %&lt;&gt;% filter(religion != &quot;Sans indication&quot;) %&gt;%
   mutate(perc = (value/pop) * 100)</code></pre>
 <pre><code>## Joining, by = &quot;annee&quot;</code></pre>
 <pre class="r"><code>txt &lt;- loadTranslation(translation.file)</code></pre>
-<pre><code>## Warning in loadTranslation(translation.file): EN DE  IT  PT  AR  RU  ES  JA  ZH languages will be discarded!</code></pre>
+<pre><code>## Warning in loadTranslation(translation.file): EN PT  AR  RU  ES  JA languages will be discarded!</code></pre>
 <pre><code>## 
-##  Remaining column names:  FR</code></pre>
+##  Remaining column names:  FR DE IT ZH</code></pre>
 <pre class="r"><code># assign colour to religion
 reg2col &lt;- structure(
   c(&quot;Evangélique réformé (protestant)&quot;, &quot;Catholique romain&quot;,
@@ -209,9 +209,9 @@ reg2col &lt;- structure(
             swi_col[6], swi_col[8], swi_col[5],
             &quot;#121008&quot;
   ))
-showinLegend &lt;- c(&quot;Autres communautés chrétiennes&quot;, &quot;Communautés juives&quot;,
-  &quot;Communautés islamiques&quot;, &quot;Autres églises et communautés&quot;)
-          
+# showinLegend &lt;- c(&quot;Autres communautés chrétiennes&quot;, &quot;Communautés juives&quot;,
+#   &quot;Communautés islamiques&quot;, &quot;Autres églises et communautés&quot;)
+showinLegend &lt;- c(&quot;acc&quot;, &quot;jui&quot;, &quot;isl&quot;, &quot;aut&quot;)
 
 data %&lt;&gt;% mutate(religion = factor(religion, levels = rev(reg2col)))
 # assign colors to relgion-nationality using different colorBrewever palette
@@ -226,9 +226,10 @@ for (lang in colnames(txt)) {
   labels &lt;- structure(
     rev(levels(data$religion)), names = txt[c('pro', 'cat', 'acc', 'jui', 'isl', 'aut', 'ath'), lang]
   )
-  
+  showinLegend_lang &lt;- txt[showinLegend, lang]
   dd &lt;- data %&gt;% 
     mutate(label = factor(names(labels)[match(religion, labels)], levels = rev(names(labels))))
+  
   
   dd$tp &lt;- paste0(
     '&lt;table class=&quot;table&quot;&gt;',
@@ -252,7 +253,7 @@ for (lang in colnames(txt)) {
   #hc
   ## hack to hide in legend!!!
   for(i in 1:length(hc$x$hc_opts$series)) {
-    if(!hc$x$hc_opts$series[[i]]$name %in% showinLegend) {
+    if(!hc$x$hc_opts$series[[i]]$name %in% showinLegend_lang) {
       hc$x$hc_opts$series[[i]]$showInLegend &lt;- F      
     }
   }
@@ -316,8 +317,8 @@ for (lang in colnames(txt)) {
     yValue = c(24, 77, 98),
     anchorX = c(&quot;left&quot;, &quot;left&quot;, &quot;right&quot;),
     anchorY = c(&quot;middle&quot;, &quot;middle&quot;, &quot;top&quot;),
-    title = c(&quot;Evangélique réformé (protestant)&quot;, &quot;Catholique romain&quot;, &quot;Sans confession&quot;),
-    color = c(&quot;#edf4f8&quot;, &quot;#f0f3f5&quot;, &quot;#efe9e0&quot;),
+    title = c(txt[&quot;pro&quot;, lang], txt[&quot;cat&quot;, lang], txt[&quot;ath&quot;, lang]),
+    color = c(&quot;#c8ddea&quot;, &quot;#d1dae0&quot;, &quot;#eee7dd&quot;),
     fontSize = c(&quot;1.4em&quot;, &quot;1.4em&quot;, &quot;1.2em&quot;)
   )
   
@@ -337,7 +338,7 @@ for (lang in colnames(txt)) {
       div(class = &quot;graphic&quot;, hc),
       div(id = &quot;cite&quot;, HTML(source)),
       HTML(iframeresizer)  
-    ), #background = chart.area.bg, 
+    ),
     file =  paste0(&quot;evolutionReligion_&quot;, lang, &quot;.html&quot;), libdir = &quot;js&quot;)  
 }</code></pre>
 </div>
