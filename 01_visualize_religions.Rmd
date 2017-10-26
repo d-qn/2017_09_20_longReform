@@ -112,6 +112,8 @@ data %<>% arrange(desc(religion))
 hc_thm <- hc_theme_swi
 hc_thm$yAxis$labels$style$fontSize <- "0.7em"
 
+# hc_thm_AR <- hc_thm
+# hc_thm_AR$yAxis$labels$x <- 3
 ```
 
 
@@ -125,6 +127,7 @@ for (lang in colnames(txt)) {
     rev(levels(data$religion)), names = txt[c('pro', 'cat', 'acc', 'jui', 'isl', 'aut', 'ath'), lang]
   )
   showinLegend_lang <- txt[showinLegend, lang]
+  #thm <- ifelse(lang == "AR", hc_thm_AR, hc_thm)
   dd <- data %>% 
     mutate(label = factor(names(labels)[match(religion, labels)], levels = rev(names(labels))))
   
@@ -172,9 +175,10 @@ for (lang in colnames(txt)) {
              max = 100,
              labels = list(
                y = 7,
-               x = -7,
+               x = ifelse(lang == 'AR', 7, -7),
                useHTML = T, 
                format = "{value}%"), 
+               align = ifelse(lang == 'AR', "left", "right"),  
              style = list("fontSize" = "1.8em")
     ) %>% 
     hc_xAxis(title = list(text = ""), lineWidth = 0.1, 
@@ -211,7 +215,7 @@ for (lang in colnames(txt)) {
   ## highcharts api for annotations: https://www.highcharts.com/plugin-registry/single/17/Annotations
   
   df <- data_frame(
-    xValue = c(1915, 1915, 2013),
+    xValue = c(1915, 1915, ifelse(lang == "AR", 2006, 2014)),
     yValue = c(24, 77, 98),
     anchorX = c("left", "left", "right"),
     anchorY = c("middle", "middle", "top"),
@@ -230,6 +234,7 @@ for (lang in colnames(txt)) {
   source <- paste0(txt['source', lang], ": ", txt['source.name', lang])
   save_html(
     tags$html(
+      dir = ifelse(lang == "AR", "rtl", "ltr"),
       tags$head(includeHTML(style_swi_highcharter())),
       tags$h2(HTML(txt['main.title', lang])),
       div(class = "descr", HTML(paste0('<img src="https://interactive.swissinfo.ch/assets/Interactive_icon.svg.png" width="12" align="top">&nbsp; ', txt['descr', lang]))),

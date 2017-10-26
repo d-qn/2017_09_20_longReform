@@ -196,9 +196,9 @@ data %&lt;&gt;% filter(religion != &quot;Sans indication&quot;) %&gt;%
   mutate(perc = (value/pop) * 100)</code></pre>
 <pre><code>## Joining, by = &quot;annee&quot;</code></pre>
 <pre class="r"><code>txt &lt;- loadTranslation(translation.file)</code></pre>
-<pre><code>## Warning in loadTranslation(translation.file): EN PT  AR  RU  ES  JA languages will be discarded!</code></pre>
+<pre><code>## Warning in loadTranslation(translation.file): RU ES  JA languages will be discarded!</code></pre>
 <pre><code>## 
-##  Remaining column names:  FR DE IT ZH</code></pre>
+##  Remaining column names:  EN FR DE IT PT AR ZH</code></pre>
 <pre class="r"><code># assign colour to religion
 reg2col &lt;- structure(
   c(&quot;Evangélique réformé (protestant)&quot;, &quot;Catholique romain&quot;,
@@ -218,7 +218,10 @@ data %&lt;&gt;% mutate(religion = factor(religion, levels = rev(reg2col)))
 data$color &lt;- names(reg2col)[match(data$religion, reg2col )]
 data %&lt;&gt;% arrange(desc(religion))</code></pre>
 <pre class="r"><code>hc_thm &lt;- hc_theme_swi
-hc_thm$yAxis$labels$style$fontSize &lt;- &quot;0.7em&quot;</code></pre>
+hc_thm$yAxis$labels$style$fontSize &lt;- &quot;0.7em&quot;
+
+# hc_thm_AR &lt;- hc_thm
+# hc_thm_AR$yAxis$labels$x &lt;- 3</code></pre>
 <pre class="r"><code>lang &lt;- 'FR'
 
 for (lang in colnames(txt)) {
@@ -227,6 +230,7 @@ for (lang in colnames(txt)) {
     rev(levels(data$religion)), names = txt[c('pro', 'cat', 'acc', 'jui', 'isl', 'aut', 'ath'), lang]
   )
   showinLegend_lang &lt;- txt[showinLegend, lang]
+  #thm &lt;- ifelse(lang == &quot;AR&quot;, hc_thm_AR, hc_thm)
   dd &lt;- data %&gt;% 
     mutate(label = factor(names(labels)[match(religion, labels)], levels = rev(names(labels))))
   
@@ -274,9 +278,10 @@ for (lang in colnames(txt)) {
              max = 100,
              labels = list(
                y = 7,
-               x = -7,
+               x = ifelse(lang == 'AR', 7, -7),
                useHTML = T, 
                format = &quot;{value}%&quot;), 
+               align = ifelse(lang == 'AR', &quot;left&quot;, &quot;right&quot;),  
              style = list(&quot;fontSize&quot; = &quot;1.8em&quot;)
     ) %&gt;% 
     hc_xAxis(title = list(text = &quot;&quot;), lineWidth = 0.1, 
@@ -313,7 +318,7 @@ for (lang in colnames(txt)) {
   ## highcharts api for annotations: https://www.highcharts.com/plugin-registry/single/17/Annotations
   
   df &lt;- data_frame(
-    xValue = c(1915, 1915, 2013),
+    xValue = c(1915, 1915, ifelse(lang == &quot;AR&quot;, 2006, 2014)),
     yValue = c(24, 77, 98),
     anchorX = c(&quot;left&quot;, &quot;left&quot;, &quot;right&quot;),
     anchorY = c(&quot;middle&quot;, &quot;middle&quot;, &quot;top&quot;),
@@ -332,6 +337,7 @@ for (lang in colnames(txt)) {
   source &lt;- paste0(txt['source', lang], &quot;: &quot;, txt['source.name', lang])
   save_html(
     tags$html(
+      dir = ifelse(lang == &quot;AR&quot;, &quot;rtl&quot;, &quot;ltr&quot;),
       tags$head(includeHTML(style_swi_highcharter())),
       tags$h2(HTML(txt['main.title', lang])),
       div(class = &quot;descr&quot;, HTML(paste0('&lt;img src=&quot;https://interactive.swissinfo.ch/assets/Interactive_icon.svg.png&quot; width=&quot;12&quot; align=&quot;top&quot;&gt;&amp;nbsp; ', txt['descr', lang]))),

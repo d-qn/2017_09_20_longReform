@@ -1,13 +1,13 @@
 code,EN,FR,DE,IT,PT,AR,RU,ES,JA,ZH
-main.title,,"En un siècle, la part de protestants dans la population a diminué de moitié",In einem Jahrhundert hat sich der Anteil der Protestanten an der Bevölkerung halbiert.,"In un secolo, la quota di protestanti nella popolazione si è dimezzata",,خلال قرن واحد، انخفت نسبة البروتستانتيين من السكان بمقدار النصف.,,,,全国人口中新教徒的数量在一个世纪里减少了一半
-descr,,Population résidante permanente en Suisse âgée de 15 ans ou plus selon l'appartenance religieuse,Bevölkerung mit ständigem Wohnsitz in der Schweiz ab 15 Jahren nach Religionszugehörigkeit,Popolazione residente permanente in Svizzera (persone di almeno 15 anni di età) a seconda dell'appartenenza religiosa,,السكان المقيمون في سويسرا بشكل دائم والذين تبلغ أعمارهم خمسة عشر سنة أو يزيد بحسب الإنتماء الديني,,,,年满15岁的瑞士长住居民人口按宗教信仰划分
-pro,,Evangélique réformé (protestant),Evangelisch-reformiert (protestantisch),Evangelica riformata (protestante),,البروتستانتية,,,,归正宗福音教会(新教)
-cat,,Catholique romain,Römisch-katholisch,Cattolica romana,,الكاثوليكية,,,,罗马天主教
-acc,,Autres communautés chrétiennes,Andere christliche Gemeinden,Altre comunità cristiane,,المجموعات المسيحية الأخرى,,,,其他基督教社团
-jui,,Communautés juives,Jüdische Gemeinden,Comunità ebraiche,,المجموعة اليهودية,,,,犹太社团
-isl,,Communautés islamiques,Islamische Gemeinden,Comunità islamiche,,المجموعة الإسلامية,,,,伊斯兰教社团
-aut,,Autres églises et communautés,Andere Kirchen und Gemeinden,Altre chiese e comunità,,الكنائس والمجموعات الأخرى,,,,其他教会与社团
-ath,,Sans confession,Konfessionslos,Senza confessione,,من دون معتقد,,,,无宗教信仰
-source,Source,source,Quelle,Fonte,fonte,المصدر,Источник,Fuente,出典,来源
-source.name,,Office fédéral de la statistique,Bundesamt für Statistik,Ufficio federale di statistica,,,,,,联邦统计局
+main.title,"Within one century, the proportion of Protestants in the Swiss population has halved","En un siècle, la part de protestants dans la population a diminué de moitié",In einem Jahrhundert hat sich der Anteil der Protestanten an der Bevölkerung halbiert.,"In un secolo, la quota di protestanti nella popolazione si è dimezzata","Em um século, a proporção protestante da população diminuiu para metade",خلال قرن واحد، انخفت نسبة البروتستانتيين من السكان بمقدار النصف.,,,,全国人口中新教徒的数量在一个世纪里减少了一半
+descr,Religious affiliation of Swiss residents aged over 15,Population résidante permanente en Suisse âgée de 15 ans ou plus selon l'appartenance religieuse,Bevölkerung mit ständigem Wohnsitz in der Schweiz ab 15 Jahren nach Religionszugehörigkeit,Popolazione residente permanente in Svizzera (persone di almeno 15 anni di età) a seconda dell'appartenenza religiosa,População residente permanente na Suíça com idade igual ou superior a 15 anos por afiliação religiosa,السكان المقيمون في سويسرا بشكل دائم والذين تبلغ أعمارهم خمسة عشر سنة أو يزيد بحسب الإنتماء الديني,,,,年满15岁的瑞士长住居民人口按宗教信仰划分
+pro,Protestant,Evangélique réformé (protestant),Evangelisch-reformiert (protestantisch),Evangelica riformata (protestante),Evangélico Reformado (Protestante),البروتستانتية,,,,归正宗福音教会(新教)
+cat,Roman Catholic,Catholique romain,Römisch-katholisch,Cattolica romana,Católico romano,الكاثوليكية,,,,罗马天主教
+acc,Other Christian communities,Autres communautés chrétiennes,Andere christliche Gemeinden,Altre comunità cristiane,Outras comunidades cristãs,المجموعات المسيحية الأخرى,,,,其他基督教社团
+jui,Jewish,Communautés juives,Jüdische Gemeinden,Comunità ebraiche,Comunidades judaicas,المجموعة اليهودية,,,,犹太社团
+isl,Islamic,Communautés islamiques,Islamische Gemeinden,Comunità islamiche,Comunidades islâmicas,المجموعة الإسلامية,,,,伊斯兰教社团
+aut,Other churches and communites,Autres églises et communautés,Andere Kirchen und Gemeinden,Altre chiese e comunità,Outras igrejas e comunidades,الكنائس والمجموعات الأخرى,,,,其他教会与社团
+ath,Not religious,Sans confession,Konfessionslos,Senza confessione,Sem confissão,من دون معتقد,,,,无宗教信仰
+source,Source,source,Quelle,Fonte,Fonte,المصدر,Источник,Fuente,出典,来源
+source.name,Federal Statistical Office,Office fédéral de la statistique,Bundesamt für Statistik,Ufficio federale di statistica,Secretaria Federal de Estatística,المكتب الفدرالي للإحصاء ,,,,联邦统计局
 code,Code,code,Code,Codice,código,الرمز,Код,código,コード,代码
